@@ -5,9 +5,7 @@ import { useAsync } from "../hooks/useAsync";
 import { usersService } from "../services/users.service";
 import { productsService } from "../services/products.service";
 
-import { UsersList } from "./users-list";
-import { ProductsList } from "./products-list";
-import { Review } from "./review";
+import { renderStep } from "./steps/render-step";
 
 export const Wizard = () => {
   const [step, setStep] = useState(1);
@@ -15,8 +13,10 @@ export const Wizard = () => {
   const users = useAsync(usersService);
   const products = useAsync(productsService, false);
 
-  const firstStep = 1;
-  const lastStep = 3;
+  const steps = Object.keys(renderStep);
+
+  const firstStep = Number(steps[0]);
+  const lastStep = Number(steps.slice(-1));
 
   const loadStepData = Array(lastStep + 1).fill(() => null);
 
@@ -48,34 +48,6 @@ export const Wizard = () => {
     }
   };
 
-  const renderStep = (step) => {
-    switch (step) {
-      case 1:
-      default:
-        return (
-          <UsersList
-            users={users.value}
-            onSetUserEnabled={events.onSetUserEnabled}
-          />
-        );
-      case 2:
-        return (
-          <ProductsList
-            users={users.value.filter((u) => u.ativo)}
-            products={products.value}
-            onSetProductEnabled={events.onSetProductEnabled}
-          />
-        );
-      case 3:
-        return (
-          <Review
-            users={users.value.filter((u) => u.ativo)}
-            products={products.value.filter((p) => p.ativo)}
-          />
-        );
-    }
-  };
-
   const renderLoader = () => {
     return isLoading() ? "Aguarde..." : false;
   };
@@ -85,7 +57,9 @@ export const Wizard = () => {
       <header>
         <h1>Wizard Exemplo</h1>
       </header>
-      <main>{renderLoader() || renderStep(step)}</main>
+      <main>
+        {renderLoader() || renderStep[step]({ users, events, products })}
+      </main>
       <br />
       <footer>
         <button
